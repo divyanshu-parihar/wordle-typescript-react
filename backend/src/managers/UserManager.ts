@@ -1,9 +1,9 @@
-import { WebSocket } from "ws";
+import { Socket } from "socket.io";
 
-type userId = string;
-interface User{
+export type userId = string;
+export interface User{
     id:userId;
-    socket: WebSocket;
+    socket: Socket;
 }
 
 export class UserManager{
@@ -13,11 +13,19 @@ export class UserManager{
         this.users = new Array<User>()
     }
 
-    addUser(id:string, socket: WebSocket){
+    addUser(id:userId, socket: Socket){
         this.users.push({
            id,
            socket
         })
     }
-    
+
+    removeUser(id:userId){
+        this.users = this.users.filter(x =>x.id != id);
+    }
+
+
+    getUsers(){
+        return this.users;
+    }
 }

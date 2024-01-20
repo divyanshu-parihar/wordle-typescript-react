@@ -3,4 +3,10 @@ import { IOManager } from './managers/IOManager';
 
 
 const ioManager = new IOManager();
-IOManager.getInstance(); 
+// const io = IOManager.getInstance(); 
+
+// io.on('connection',(socket)=>{
+//     console.log(socket.id) 
+// })
+
+

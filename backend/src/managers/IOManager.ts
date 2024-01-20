@@ -1,5 +1,6 @@
-import { WebSocketServer, Server } from "ws";
+import { Server, Socket } from "socket.io";
 import { UserManager } from "./UserManager";
+import getRandomId from "../utils/getRandomId";
 
 
 const userManager:UserManager = new UserManager()
@@ -7,40 +8,46 @@ export class IOManager{
     private static io: Server;
     
     constructor(){
+        IOManager.getInstance()
         this.initHandler(); 
     }
     private initHandler(){
         // Makes sure these is always an instance before handlers
-        if(!IOManager.io) IOManager.getInstance();
-        IOManager.io.once('listening',()=>{
-            console.log("SERVER STARTED")
+        if(!IOManager.io) return;
+       
+        IOManager.io.on('connection',(socket)=>{
+          console.log(socket.id)
+          IOManager.socketOpen(socket)
+          this.socketHandler(socket);
         })
+        
+    }
+    private socketHandler(socket:Socket){
+      socket.on('GET_WORD',(_)=>{
+        socket.emit('RECEIVE_WORD','Plane')
+      })
+      socket.on('disconnect',(reason)=>{
+        console.log(socket.id)
+        IOManager.socketClose(socket);
+      })
+    }
+    private static socketOpen(socket: Socket){
+        userManager.addUser(socket.id,socket);
+        console.log(userManager.getUsers()) 
+    }
+    private static socketClose(socket: Socket){
+      userManager.removeUser(socket.id); 
+      console.log(userManager.getUsers())
     }
     public static getInstance(){
         if(!IOManager.io){
-            IOManager.io = new WebSocketServer({
-                port: 8080,
-                perMessageDeflate: {
-                  zlibDeflateOptions: {
-                    // See zlib defaults.
-                    chunkSize: 1024,
-                    memLevel: 7,
-                    level: 3
-                  },
-                  zlibInflateOptions: {
-                    chunkSize: 10 * 1024
-                  },
-                  // Other options settable:
-                  clientNoContextTakeover: true, // Defaults to negotiated value.
-                  serverNoContextTakeover: true, // Defaults to negotiated value.
-                  serverMaxWindowBits: 10, // Defaults to negotiated value.
-                  // Below options specified as default values.
-                  concurrencyLimit: 10, // Limits zlib concurrency for perf.
-                  threshold: 1024 // Size (in bytes) below which messages
-                  // should not be compressed if context takeover is disabled.
-                }
-              });
+            IOManager.io = new Server(8080,{
+            cors:{
+              origin:"*"
+            }
+            })
         }
+        // IOManager.io.listen(8080)
         return IOManager.io;
     }
 }
